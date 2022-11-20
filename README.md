@@ -6,7 +6,11 @@ Projeto final da cadeira de Programação para Resolução de Problemas
 
 Rodar o projeto em sistema Linux, com GTK4 instalado e configurado, usando o comando
 
-    gcc main.c `pkg-config --cflags gtk4 --libs gtk4` -o main.o && ./main.o
+    gcc main.c `pkg-config --cflags gtk4 sqlite3 --libs gtk4 sqlite3` -o main.o && ./main.o
+
+Dados para teste
+
+    insert into users values (71254, 'Vinícius Kappke', 'vkappke@mx2.unisc.br', 'admin', (SELECT date('now')), (SELECT date('now')))
 
 ## Opções
 

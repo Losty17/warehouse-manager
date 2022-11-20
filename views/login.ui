@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <object id="window" class="GtkWindow">
+    <property name="title">Autenticação</property>
+    <property name="default_width">400</property>
+    <property name="default_height">500</property>
+    <child>    
+      <object id="box" class="GtkBox">
+        <property name="orientation">vertical</property>
+        <property name="halign">center</property>
+        <property name="valign">center</property>
+        <property name="spacing">20</property>
+        <child>
+          <object id="login" class="GtkEntry">
+            <property name="placeholder-text">Login</property>
+            <property name="input-purpose">number</property>
+            <property name="max-length">6</property>
+          </object>
+        </child>
+        <child>
+          <object id="password" class="GtkEntry">
+            <property name="placeholder-text">Senha</property>
+            <property name="input-purpose">password</property>
+          </object>
+        </child>
+        <child>
+         	<object class="GtkButton" id="enter">
+           	<property name="label">Entrar</property>
+            <layout>
+        			<property name="column">1</property>
+              <property name="row">0</property>
+            </layout>
+          </object>
+        </child>
+      </object>
+    </child>
+  </object>
+</interface>
