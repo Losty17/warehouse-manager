@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <object id="window" class="GtkWindow">
+    <property name="title">Gerenciamento de Almoxarifado</property>
+    <property name="default_width">800</property>
+    <property name="default_height">600</property>
+    <child>    
+      <object id="box" class="GtkBox">
+        <property name="orientation">vertical</property>
+        <property name="halign">center</property>
+        <property name="valign">center</property>
+        <property name="spacing">20</property>
+        <child>
+          <object id="title" class="GtkLabel">
+            <property name="label">Almoxarifado</property>
+            <attributes>
+              <attribute name="weight" value="PANGO_WEIGHT_BOLD"/>
+              <attribute name="scale" value="2"/>
+            </attributes>
+          </object>
+        </child>
+      </object>
+    </child>
+  </object>
+</interface>
