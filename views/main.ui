@@ -43,7 +43,7 @@
               </object>
             </child>
             <child>
-              <object class="GtkButton" id="Storage">
+              <object class="GtkButton" id="storage">
                 <property name="label">Estoque</property>
                 <layout>
                   <property name="column">0</property>

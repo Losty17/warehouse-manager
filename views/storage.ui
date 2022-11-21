@@ -10,27 +10,24 @@
         <property name="halign">center</property>
         <property name="valign">center</property>
         <property name="spacing">20</property>
-        <!-- <child>
+        <child>
           <object id="title" class="GtkLabel">
-            <property name="label">Almoxarifado</property>
+            <property name="label">Estoque</property>
             <attributes>
               <attribute name="weight" value="PANGO_WEIGHT_BOLD"/>
               <attribute name="scale" value="2"/>
             </attributes>
           </object>
-        </child> -->
+        </child>
         <child>
-          <object id="requester_id" class="GtkEntry">
-            <property name="placeholder-text">Matrícula do solicitante</property>
-            <property name="input-purpose">number</property>
-            <property name="max-length">6</property>
+          <object id="table" class="GtkGrid">
+            <property name="row_spacing">15</property>
+            <property name="column_spacing">15</property>
           </object>
         </child>
         <child>
-          <object id="Continuar" class="GtkEntry">
-            <property name="placeholder-text">Matrícula do solicitante</property>
-            <property name="input-purpose">number</property>
-            <property name="max-length">6</property>
+          <object id="quit" class="GtkButton">
+            <property name="label">Voltar</property>
           </object>
         </child>
       </object>

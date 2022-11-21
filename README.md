@@ -2,15 +2,47 @@
 
 Projeto final da cadeira de Programação para Resolução de Problemas
 
-#### Running
+### Running
 
 Rodar o projeto em sistema Linux, com GTK4 instalado e configurado, usando o comando
 
     gcc main.c `pkg-config --cflags gtk4 sqlite3 --libs gtk4 sqlite3` -o main.o && ./main.o
 
-Dados para teste
+---
+
+### Dados para teste
+
+#### Usuários
+
+##### Tabela
+
+    create table users (
+      id integer not null primary key,
+      name varchar(255) not null,
+      password varchar(255) not null,
+      created_at datetime not null,
+      updated_at datetime not null
+    );
+
+##### Dados
 
     insert into users values (71254, 'Vinícius Kappke', 'vkappke@mx2.unisc.br', 'admin', (SELECT date('now')), (SELECT date('now')))
+
+#### Itens
+
+##### Tabela
+
+    create table items (
+      id integer not null primary key autoincrement,
+      row int not null,
+      column int not null,
+      name varchar(255) not null,
+      qty int not null,
+      created_at datetime not null,
+      updated_at datetime not null
+    );
+
+---
 
 ## Opções
 

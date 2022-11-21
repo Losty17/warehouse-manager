@@ -10,7 +10,92 @@ typedef struct
 {
     GtkApplication *app;
     GtkWindow *window;
+    GtkBuilder *builder;
 } app_data_t;
+
+typedef struct
+{
+    int id, row, col, qty;
+    char *name;
+} item_t;
+
+item_t **create_shelf_matrix(int rows, int cols);
+static item_t **get_item_shelf();
+static GtkBuilder *get_builder_from_file(char *builder_name, GtkApplication *app);
+static void quit_screen(GtkWindow *window);
+static void corrective_maintence_screen(GtkWidget *widget, gpointer data);
+static void storage_screen(GtkWidget *widget, gpointer data);
+static void main_screen(GtkApplication *app, gpointer user_data);
+static void handle_login(GtkButton *widget, gpointer data);
+static void login_screen(GtkApplication *app, gpointer data);
+
+/**
+ * @brief Inicializa uma matriz 2x2 vazia que representa uma
+ * prateleira de itens no estoque.
+ *
+ * @param rows Número de linhas da matriz.
+ * @param cols Número de colunas da matriz.
+ * @return item_t** Ponteiro para a matriz.
+ */
+item_t **create_shelf_matrix(int rows, int cols)
+{
+    item_t **shelf = malloc(rows * sizeof(item_t *));
+    for (int i = 0; i < rows; i++)
+    {
+        shelf[i] = malloc(cols * sizeof(item_t));
+        for (int j = 0; j < cols; j++)
+        {
+            shelf[i][j].id = 0;
+            shelf[i][j].row = i;
+            shelf[i][j].col = j;
+            shelf[i][j].name = NULL;
+        }
+    }
+    return shelf;
+}
+
+/**
+ * @brief Se comunica com o banco para obter os itens
+ * e alinha-los na matriz da prateleira.
+ *
+ * @return item_t** Ponteiro para a matriz.
+ */
+static item_t **get_item_shelf()
+{
+    item_t **shelf = create_shelf_matrix(4, 4);
+    sqlite3 *db;
+    sqlite3_stmt *stmt;
+    int rc = sqlite3_open("database.db", &db);
+    if (rc != SQLITE_OK)
+    {
+        fprintf(stderr, "Cannot open database: %s\n", sqlite3_errmsg(db));
+        sqlite3_close(db);
+        return NULL;
+    }
+    rc = sqlite3_prepare_v2(db, "SELECT id, row, column, qty, name FROM items", -1, &stmt, 0);
+    if (rc != SQLITE_OK)
+    {
+        fprintf(stderr, "Failed to fetch data: %s\n", sqlite3_errmsg(db));
+        sqlite3_close(db);
+        return NULL;
+    }
+    int step = sqlite3_step(stmt);
+    while (step == SQLITE_ROW)
+    {
+        int id = sqlite3_column_int(stmt, 0);
+        int row = sqlite3_column_int(stmt, 1);
+        int col = sqlite3_column_int(stmt, 2);
+        int qty = sqlite3_column_int(stmt, 3);
+        const char *name = sqlite3_column_text(stmt, 4);
+
+        char *name_copy = malloc(strlen(name) + 1);
+        shelf[row][col] = (item_t){id, row, col, qty, strcpy(name_copy, name)};
+        step = sqlite3_step(stmt);
+    }
+    sqlite3_finalize(stmt);
+    sqlite3_close(db);
+    return shelf;
+}
 
 /**
  * @brief Cria uma janela e retorna o construtor a partir de um arquivo .ui
@@ -60,12 +145,42 @@ static void corrective_maintence_screen(GtkWidget *widget, gpointer data)
     GtkBuilder *builder = get_builder_from_file("corrective_maintence", app_data->app);
 }
 
+static void storage_screen(GtkWidget *widget, gpointer data)
+{
+    app_data_t *app_data = data;
+    gtk_window_close(app_data->window);
+
+    GtkBuilder *builder = get_builder_from_file("storage", app_data->app);
+
+    item_t **shelf = get_item_shelf();
+
+    GtkGrid *grid = GTK_GRID(gtk_builder_get_object(builder, "table"));
+
+    for (int i = 0; i < 4; i++)
+    {
+        for (int j = 0; j < 4; j++)
+        {
+            char buffer[strlen(shelf[i][j].name) + 7];
+            sprintf(buffer, "%dx %s", shelf[i][j].qty, shelf[i][j].name);
+
+            GtkWidget *label = gtk_label_new(buffer);
+            gtk_grid_attach(grid, label, j, i, 1, 1);
+        }
+    }
+
+    app_data->window = GTK_WINDOW(gtk_builder_get_object(builder, "window"));
+
+    GObject *button = gtk_builder_get_object(builder, "quit");
+    g_signal_connect(button, "clicked", G_CALLBACK(main_screen), app_data);
+}
+
 /**
  * @brief Define o comportamento da tela inicial do sistema
  */
 static void main_screen(GtkApplication *app, gpointer user_data)
 {
-    GtkWindow *window = user_data;
+    app_data_t *app_data = user_data;
+    GtkWindow *window = app_data->window;
     gtk_window_close(window);
 
     /* Gera a tela a partir do arquivo */
@@ -75,7 +190,6 @@ static void main_screen(GtkApplication *app, gpointer user_data)
     window = GTK_WINDOW(gtk_builder_get_object(builder, "window"));
 
     /* Define as propriedades a serem encaminhadas a próxima tela */
-    app_data_t *app_data = malloc(sizeof(app_data_t));
     app_data->app = app;
     app_data->window = window;
 
@@ -84,6 +198,10 @@ static void main_screen(GtkApplication *app, gpointer user_data)
     /* Manutenção corretiva */
     button = gtk_builder_get_object(builder, "corrective_maintence");
     g_signal_connect(button, "clicked", G_CALLBACK(corrective_maintence_screen), app_data);
+
+    /* Armazenamento */
+    button = gtk_builder_get_object(builder, "storage");
+    g_signal_connect(button, "clicked", G_CALLBACK(storage_screen), app_data);
 
     /* Sair */
     button = gtk_builder_get_object(builder, "quit");
@@ -100,7 +218,8 @@ static void main_screen(GtkApplication *app, gpointer user_data)
  */
 static void handle_login(GtkButton *widget, gpointer data)
 {
-    GtkBuilder *builder = data;
+    app_data_t *app_data = data;
+    GtkBuilder *builder = app_data->builder;
 
     /* Busca os campos de login e senha */
     GObject *login = gtk_builder_get_object(builder, "login");
@@ -129,11 +248,12 @@ static void handle_login(GtkButton *widget, gpointer data)
 
     /* Pega a window para poder passar para a próxima tela ou para mostrar a mensagem de erro */
     GtkWindow *window = GTK_WINDOW(gtk_builder_get_object(builder, "window"));
+    app_data->window = window;
 
     if (sqlite3_step(stmt) == SQLITE_ROW)
     {
         /* Se o usuário corresponde, passa para o menu principal */
-        main_screen(gtk_window_get_application(window), window);
+        main_screen(app_data->app, app_data);
     }
     else
     {
@@ -171,15 +291,16 @@ static void handle_login(GtkButton *widget, gpointer data)
 /**
  * @brief Mostra a tela de Login, possibilitando o usuário conectar no sistema
  */
-static void login_screen(GtkApplication *app, gpointer user_data)
+static void login_screen(GtkApplication *app, gpointer data)
 {
+    app_data_t *app_data = data;
     GtkBuilder *builder = get_builder_from_file("login", app);
 
-    GObject *button;
+    app_data->builder = builder;
 
     /* Entrar */
-    button = gtk_builder_get_object(builder, "enter");
-    g_signal_connect(button, "clicked", G_CALLBACK(handle_login), builder);
+    GObject *button = gtk_builder_get_object(builder, "enter");
+    g_signal_connect(button, "clicked", G_CALLBACK(handle_login), app_data);
 }
 
 int main(int argc, char *argv[])
@@ -189,8 +310,13 @@ int main(int argc, char *argv[])
 #endif
 
     GtkApplication *app = gtk_application_new("tech.kappke.WarehouseManager", G_APPLICATION_FLAGS_NONE);
-    // g_signal_connect(app, "activate", G_CALLBACK(main_screen), NULL);
-    g_signal_connect(app, "activate", G_CALLBACK(login_screen), NULL);
+
+    app_data_t *app_data = malloc(sizeof(app_data_t));
+    app_data->app = app;
+    app_data->window = NULL;
+    app_data->builder = NULL;
+
+    g_signal_connect(app, "activate", G_CALLBACK(login_screen), app_data);
 
     int status = g_application_run(G_APPLICATION(app), argc, argv);
     g_object_unref(app);
