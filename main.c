@@ -170,7 +170,7 @@ static void corrective_maintence_screen(GtkWidget *widget, gpointer data)
     g_signal_connect(button, "clicked", G_CALLBACK(switch_to_main_screen), app_data);
 
     button = GTK_BUTTON(gtk_builder_get_object(builder, "continue"));
-    g_signal_connect(button, "clicked", G_CALLBACK(end_corrective_maintence), app_data);
+    // g_signal_connect(button, "clicked", G_CALLBACK(end_corrective_maintence), app_data);
 }
 
 void add_item_to_tree_view(GtkWidget *widget, gpointer data)
