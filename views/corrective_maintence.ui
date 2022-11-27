@@ -7,18 +7,11 @@
     <child>    
       <object id="box" class="GtkBox">
         <property name="orientation">vertical</property>
-        <property name="halign">center</property>
-        <property name="valign">center</property>
-        <property name="spacing">20</property>
-        <!-- <child>
-          <object id="title" class="GtkLabel">
-            <property name="label">Almoxarifado</property>
-            <attributes>
-              <attribute name="weight" value="PANGO_WEIGHT_BOLD"/>
-              <attribute name="scale" value="2"/>
-            </attributes>
-          </object>
-        </child> -->
+        <property name="spacing">10</property>
+        <property name="margin-start">80</property>
+        <property name="margin-end">80</property>
+        <property name="margin-top">20</property>
+        <property name="margin-bottom">20</property>
         <child>
           <object id="requester_id" class="GtkEntry">
             <property name="placeholder-text">Matrícula do solicitante</property>
@@ -27,10 +20,110 @@
           </object>
         </child>
         <child>
-          <object id="Continuar" class="GtkEntry">
-            <property name="placeholder-text">Matrícula do solicitante</property>
-            <property name="input-purpose">number</property>
-            <property name="max-length">6</property>
+          <object id="box2" class="GtkBox">
+            <property name="orientation">horizontal</property>
+            <property name="spacing">10</property>
+            <child>
+              <object id="product" class="GtkEntry">
+                <property name="placeholder-text">Material</property>
+              </object>
+            </child>
+            <child>
+              <object id="product_qty" class="GtkEntry">
+                <property name="placeholder-text">Quantidade</property>
+                <property name="max-length">4</property>
+              </object>
+            </child>
+            <child>
+              <object id="product_add" class="GtkButton">
+                <property name="label">Adicionar</property>
+              </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="GtkTreeView" id="treeview">
+            <property name="model">liststore1</property>
+            <property name="height-request">460</property>
+            <property name="fixed-height-mode">True</property>
+            <child>
+              <object class="GtkTreeViewColumn" id="id-column">
+                <property name="title">ID</property>
+                <property name="sizing">fixed</property>
+                <child>
+                  <object class="GtkCellRendererText" id="test-renderer"/>
+                  <attributes>
+                    <attribute name="text">0</attribute>
+                  </attributes>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="GtkTreeViewColumn" id="name-column">
+                <property name="title">Name</property>
+                <property name="expand">True</property>
+                <property name="sizing">fixed</property>
+                <child>
+                  <object class="GtkCellRendererText" id="test-renderer2"/>
+                  <attributes>
+                    <attribute name="text">1</attribute>
+                  </attributes>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="GtkTreeViewColumn" id="qty-column">
+                <property name="title">Qty</property>
+                <property name="sizing">fixed</property>
+                <child>
+                  <object class="GtkCellRendererText" id="test-renderer3"/>
+                  <attributes>
+                    <attribute name="text">2</attribute>
+                  </attributes>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="GtkTreeViewColumn" id="locale-column">
+                <property name="title">Location</property>
+                <property name="sizing">fixed</property>
+                <child>
+                  <object class="GtkCellRendererText" id="test-renderer4"/>
+                  <attributes>
+                    <attribute name="text">3</attribute>
+                  </attributes>
+                </child>
+              </object>
+            </child>
+            <child internal-child="selection">
+              <object class="GtkTreeSelection" id="selection">
+                <signal name="changed" handler="on_treeview_selection_changed"/>
+              </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object id="button-row" class="GtkBox">
+            <property name="orientation">horizontal</property>
+            <property name="hexpand">True</property>
+            <property name="hexpand-set">True</property>
+            <property name="spacing">440</property>
+            <child>
+              <object id="return" class="GtkButton">
+                <property name="label">Voltar</property>
+                <property name="width-request">100</property>
+                <property name="hexpand">False</property>
+                <property name="halign">start</property>
+              </object>
+            </child>
+            <child>
+              <object id="continue" class="GtkButton">
+                <property name="label">Continuar</property>
+                <property name="width-request">100</property>
+                <property name="hexpand">False</property>
+                <property name="halign">end</property>
+              </object>
+            </child>
           </object>
         </child>
       </object>

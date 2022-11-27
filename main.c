@@ -26,8 +26,19 @@ static void quit_screen(GtkWindow *window);
 static void corrective_maintence_screen(GtkWidget *widget, gpointer data);
 static void storage_screen(GtkWidget *widget, gpointer data);
 static void main_screen(GtkApplication *app, gpointer user_data);
+static void switch_to_main_screen(GtkWidget *widget, gpointer user_data);
 static void handle_login(GtkButton *widget, gpointer data);
 static void login_screen(GtkApplication *app, gpointer data);
+item_t *array_push(item_t *arr, item_t value);
+void add_item_to_tree_view(GtkWidget *widget, gpointer data);
+
+item_t *array_push(item_t *arr, item_t value)
+{
+    int len = sizeof(arr) / sizeof(arr[0]);
+    arr = realloc(arr, (len + 1) * sizeof(item_t));
+    arr[len] = value;
+    return arr;
+}
 
 /**
  * @brief Inicializa uma matriz 2x2 vazia que representa uma
@@ -140,9 +151,103 @@ static void quit_screen(GtkWindow *window)
 static void corrective_maintence_screen(GtkWidget *widget, gpointer data)
 {
     app_data_t *app_data = data;
-    gtk_window_close(app_data->window);
+    if (app_data->window)
+        gtk_window_close(app_data->window);
 
     GtkBuilder *builder = get_builder_from_file("corrective_maintence", app_data->app);
+    GtkTreeView *tree_view = GTK_TREE_VIEW(gtk_builder_get_object(builder, "treeview"));
+
+    GtkListStore *list_store = gtk_list_store_new(4, G_TYPE_INT, G_TYPE_STRING, G_TYPE_INT, G_TYPE_STRING);
+
+    gtk_tree_view_set_model(tree_view, GTK_TREE_MODEL(list_store));
+    app_data->builder = builder;
+    app_data->window = GTK_WINDOW(gtk_builder_get_object(builder, "window"));
+
+    GtkButton *button = GTK_BUTTON(gtk_builder_get_object(builder, "product_add"));
+    g_signal_connect(button, "clicked", G_CALLBACK(add_item_to_tree_view), app_data);
+
+    button = GTK_BUTTON(gtk_builder_get_object(builder, "return"));
+    g_signal_connect(button, "clicked", G_CALLBACK(switch_to_main_screen), app_data);
+
+    button = GTK_BUTTON(gtk_builder_get_object(builder, "continue"));
+    g_signal_connect(button, "clicked", G_CALLBACK(end_corrective_maintence), app_data);
+}
+
+void add_item_to_tree_view(GtkWidget *widget, gpointer data)
+{
+    app_data_t *app_data = data;
+    GtkBuilder *builder = app_data->builder;
+
+    /* Busca os campos de login e senha */
+    GObject *product_entry = gtk_builder_get_object(builder, "product");
+    GObject *qty_entry = gtk_builder_get_object(builder, "product_qty");
+
+    /* Pega o buffer de texto dos campos de input */
+    GtkEntryBuffer *product_buffer = gtk_entry_get_buffer(GTK_ENTRY(product_entry));
+    GtkEntryBuffer *qty_buffer = gtk_entry_get_buffer(GTK_ENTRY(qty_entry));
+
+    /* Busca o texto dos buffers */
+    const gchar *id = gtk_entry_buffer_get_text(product_buffer);
+    const gchar *qty = gtk_entry_buffer_get_text(qty_buffer);
+
+    /* Procurar item na matriz de prateleira */
+    item_t **shelf = get_item_shelf();
+    item_t *item = NULL;
+    for (int i = 0; i < 4; i++)
+    {
+        for (int j = 0; j < 4; j++)
+        {
+            if (shelf[i][j].id == atoi(id))
+            {
+                item = &shelf[i][j];
+                break;
+            }
+        }
+    }
+
+    if (item)
+    {
+        GtkTreeModel *model = gtk_tree_view_get_model(GTK_TREE_VIEW(gtk_builder_get_object(builder, "treeview")));
+        GtkListStore *list_store = GTK_LIST_STORE(model);
+
+        char *locale = malloc(10 * sizeof(char *));
+        sprintf(locale, "%c%d", 97 + item->col, item->row + 1);
+
+        GtkTreeIter iter;
+        bool next = gtk_tree_model_get_iter_first(model, &iter);
+
+        bool changed = false;
+        while (next)
+        {
+            int id;
+            char *locale;
+            int old_qty;
+            char *name;
+
+            gtk_tree_model_get(model, &iter, 0, &id, 1, &locale, 2, &old_qty, 3, &name, -1);
+
+            if (id == item->id)
+            {
+                int new_qty = old_qty + atoi(qty);
+                gtk_list_store_set(list_store, &iter, 2, new_qty > 1 ? new_qty : 1, -1);
+                changed = true;
+                break;
+            }
+
+            next = gtk_tree_model_iter_next(model, &iter);
+        }
+
+        if (!changed)
+            gtk_list_store_insert_with_values(
+                list_store,
+                NULL,
+                -1,
+                0, item->id,
+                1, item->name,
+                2, atoi(qty) > 1 ? atoi(qty) : 1,
+                3, locale,
+                -1);
+    }
 }
 
 static void storage_screen(GtkWidget *widget, gpointer data)
@@ -171,7 +276,13 @@ static void storage_screen(GtkWidget *widget, gpointer data)
     app_data->window = GTK_WINDOW(gtk_builder_get_object(builder, "window"));
 
     GObject *button = gtk_builder_get_object(builder, "quit");
-    g_signal_connect(button, "clicked", G_CALLBACK(main_screen), app_data);
+    g_signal_connect(button, "clicked", G_CALLBACK(switch_to_main_screen), app_data);
+}
+
+static void switch_to_main_screen(GtkWidget *widget, gpointer user_data)
+{
+    app_data_t *app_data = user_data;
+    main_screen(app_data->app, app_data);
 }
 
 /**
@@ -185,6 +296,7 @@ static void main_screen(GtkApplication *app, gpointer user_data)
 
     /* Gera a tela a partir do arquivo */
     GtkBuilder *builder = get_builder_from_file("main", app);
+    g_print("teste");
 
     /* Busca a janela a partir do builder */
     window = GTK_WINDOW(gtk_builder_get_object(builder, "window"));
@@ -316,7 +428,8 @@ int main(int argc, char *argv[])
     app_data->window = NULL;
     app_data->builder = NULL;
 
-    g_signal_connect(app, "activate", G_CALLBACK(login_screen), app_data);
+    // g_signal_connect(app, "activate", G_CALLBACK(login_screen), app_data);
+    g_signal_connect(app, "activate", G_CALLBACK(corrective_maintence_screen), app_data);
 
     int status = g_application_run(G_APPLICATION(app), argc, argv);
     g_object_unref(app);
