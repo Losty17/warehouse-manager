@@ -42,6 +42,16 @@ Rodar o projeto em sistema Linux, com GTK4 instalado e configurado, usando o com
       updated_at datetime not null
     );
 
+#### Ordens de Manutenção
+
+##### Tabela
+
+    create table maintence_orders (
+      uuid VARCHAR(255) unique,
+      done int,
+      requester_id int
+    )
+
 ---
 
 ## Opções

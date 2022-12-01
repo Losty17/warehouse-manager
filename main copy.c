@@ -21,18 +21,6 @@ typedef struct
     char *name;
 } item_t;
 
-typedef struct
-{
-    int requester_id, done;
-    char *uuid;
-} maintence_order_t;
-
-typedef struct
-{
-    int size;
-    maintence_order_t *mo_arr;
-} mo_history_t;
-
 item_t **create_shelf_matrix(int rows, int cols);
 static item_t **get_item_shelf();
 static GtkBuilder *get_builder_from_file(char *builder_name, GtkApplication *app);
@@ -45,7 +33,6 @@ static void handle_login(GtkButton *widget, gpointer data);
 static void login_screen(GtkApplication *app, gpointer data);
 item_t *array_push(item_t *arr, item_t value);
 void add_item_to_tree_view(GtkWidget *widget, gpointer data);
-void create_maintence_order(GtkWidget *widget, gpointer data);
 
 char *gen_uuid()
 {
@@ -149,68 +136,6 @@ static item_t **get_item_shelf()
 }
 
 /**
- * @brief Se comunica com o banco para obter os itens
- * e alinha-los na matriz da prateleira.
- *
- * @return item_t** Ponteiro para a matriz.
- */
-static mo_history_t *get_mo_history()
-{
-    sqlite3 *db;
-    sqlite3_stmt *stmt;
-    int rc = sqlite3_open("database.db", &db);
-    if (rc != SQLITE_OK)
-    {
-        fprintf(stderr, "Cannot open database: %s\n", sqlite3_errmsg(db));
-        sqlite3_close(db);
-        return NULL;
-    }
-    int arr_size = 0;
-    rc = sqlite3_prepare_v2(db, "SELECT COUNT(*) FROM maintence_orders", -1, &stmt, 0);
-
-    int step = sqlite3_step(stmt);
-    while (step == SQLITE_ROW)
-    {
-        arr_size = sqlite3_column_int(stmt, 0);
-        step = sqlite3_step(stmt);
-    }
-
-    sqlite3_finalize(stmt);
-
-    maintence_order_t *arr = malloc(arr_size * sizeof(maintence_order_t));
-
-    rc = sqlite3_prepare_v2(db, "SELECT uuid, requester_id, done FROM maintence_orders", -1, &stmt, 0);
-    if (rc != SQLITE_OK)
-    {
-        fprintf(stderr, "Failed to fetch data: %s\n", sqlite3_errmsg(db));
-        sqlite3_close(db);
-        return NULL;
-    }
-
-    step = sqlite3_step(stmt);
-    int i = 0;
-    while (step == SQLITE_ROW)
-    {
-        const char *uuid = sqlite3_column_text(stmt, 0);
-        int requester_id = sqlite3_column_int(stmt, 1);
-        int done = sqlite3_column_int(stmt, 2);
-
-        char *copy = malloc(strlen(uuid) + 1);
-        arr[i] = (maintence_order_t){requester_id, done, strcpy(copy, uuid)};
-        step = sqlite3_step(stmt);
-        i++;
-    }
-    sqlite3_finalize(stmt);
-    sqlite3_close(db);
-
-    mo_history_t *mo_history = malloc(sizeof(mo_history_t));
-    mo_history->size = arr_size;
-    mo_history->mo_arr = arr;
-
-    return mo_history;
-}
-
-/**
  * @brief Cria uma janela e retorna o construtor a partir de um arquivo .ui
  *
  * @param builder_name Nome do arquivo .ui
@@ -250,56 +175,11 @@ static void quit_screen(GtkWindow *window)
     gtk_window_close(window);
 }
 
-static void preventive_maintence_screen(GtkWidget *widget, gpointer data)
-{
-    app_data_t *app_data = data;
-    if (app_data->window)
-        gtk_window_close(app_data->window);
-
-    GtkBuilder *builder = get_builder_from_file("preventive_maintence", app_data->app);
-    GtkTreeView *tree_view = GTK_TREE_VIEW(gtk_builder_get_object(builder, "treeview"));
-
-    GtkListStore *list_store = gtk_list_store_new(4, G_TYPE_INT, G_TYPE_STRING, G_TYPE_INT, G_TYPE_STRING);
-
-    gtk_tree_view_set_model(tree_view, GTK_TREE_MODEL(list_store));
-    app_data->builder = builder;
-    app_data->window = GTK_WINDOW(gtk_builder_get_object(builder, "window"));
-
-    GtkButton *button = GTK_BUTTON(gtk_builder_get_object(builder, "product_add"));
-    g_signal_connect(button, "clicked", G_CALLBACK(add_item_to_tree_view), app_data);
-
-    button = GTK_BUTTON(gtk_builder_get_object(builder, "return"));
-    g_signal_connect(button, "clicked", G_CALLBACK(switch_to_main_screen), app_data);
-
-    button = GTK_BUTTON(gtk_builder_get_object(builder, "continue"));
-    g_signal_connect(button, "clicked", G_CALLBACK(create_maintence_order), app_data);
-}
-
 static void maintence_order_history_screen(GtkWidget *widget, gpointer data)
 {
-    GtkBuilder *builder = get_builder_from_file("history", NULL);
+    GtkBuilder *builder = get_builder_from_file("order_history", NULL);
     GObject *window = gtk_builder_get_object(builder, "window");
     g_signal_connect(window, "destroy", G_CALLBACK(quit_screen), NULL);
-
-    mo_history_t *mo_history = get_mo_history();
-
-    GtkTreeView *tree_view = GTK_TREE_VIEW(gtk_builder_get_object(builder, "treeview"));
-    GtkListStore *list_store = gtk_list_store_new(3, G_TYPE_STRING, G_TYPE_INT, G_TYPE_BOOLEAN);
-
-    gtk_tree_view_set_model(tree_view, GTK_TREE_MODEL(list_store));
-    // g_print("%d", sizeof(mo_history[0]));
-    GtkTreeIter iter;
-    for (int i = 0; i < mo_history->size; i++)
-    {
-        gtk_list_store_insert_with_values(
-            list_store,
-            &iter,
-            -1,
-            0, mo_history->mo_arr[i].uuid,
-            1, mo_history->mo_arr[i].requester_id,
-            2, mo_history->mo_arr[i].done,
-            -1);
-    }
 }
 
 void show_dialog(GtkWindow *window, char *window_title, char *message)
@@ -372,28 +252,6 @@ void create_maintence_order(GtkWidget *widget, gpointer data)
         sqlite3_bind_text(stmt, 3, 0, -1, SQLITE_STATIC);
 
         sqlite3_step(stmt);
-        sqlite3_finalize(stmt);
-
-        GtkTreeView *tree_view = GTK_TREE_VIEW(gtk_builder_get_object(builder, "treeview"));
-        GtkTreeModel *model = gtk_tree_view_get_model(tree_view);
-        GtkTreeIter iter;
-
-        gboolean valid = gtk_tree_model_get_iter_first(model, &iter);
-        while (valid)
-        {
-            gint quantity, item_id;
-            gtk_tree_model_get(model, &iter, 0, &item_id, 2, &quantity, -1);
-
-            sqlite3_prepare(db, "UPDATE items SET qty = qty - ? WHERE id = ?", -1, &stmt, NULL);
-            sqlite3_bind_int(stmt, 1, quantity);
-            sqlite3_bind_int(stmt, 2, item_id);
-
-            sqlite3_step(stmt);
-            sqlite3_finalize(stmt);
-
-            // decrease_item_quantity(item_id, quantity);
-            valid = gtk_tree_model_iter_next(model, &iter);
-        }
     }
 }
 
@@ -560,15 +418,9 @@ static void main_screen(GtkApplication *app, gpointer user_data)
     button = gtk_builder_get_object(builder, "corrective_maintence");
     g_signal_connect(button, "clicked", G_CALLBACK(corrective_maintence_screen), app_data);
 
-    button = gtk_builder_get_object(builder, "preventive_maintence");
-    g_signal_connect(button, "clicked", G_CALLBACK(preventive_maintence_screen), app_data);
-
     /* Armazenamento */
     button = gtk_builder_get_object(builder, "storage");
     g_signal_connect(button, "clicked", G_CALLBACK(storage_screen), app_data);
-
-    button = gtk_builder_get_object(builder, "history");
-    g_signal_connect(button, "clicked", G_CALLBACK(maintence_order_history_screen), app_data);
 
     /* Sair */
     button = gtk_builder_get_object(builder, "quit");
