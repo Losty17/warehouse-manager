@@ -528,6 +528,18 @@ static void storage_screen(GtkWidget *widget, gpointer data)
     g_signal_connect(button, "clicked", G_CALLBACK(switch_to_main_screen), app_data);
 }
 
+static void info_screen(GtkWidget *widget, gpointer data)
+{
+    app_data_t *app_data = data;
+    gtk_window_close(app_data->window);
+
+    GtkBuilder *builder = get_builder_from_file("info", app_data->app);
+    app_data->window = GTK_WINDOW(gtk_builder_get_object(builder, "window"));
+
+    GObject *button = gtk_builder_get_object(builder, "quit");
+    g_signal_connect(button, "clicked", G_CALLBACK(switch_to_main_screen), app_data);
+}
+
 static void switch_to_main_screen(GtkWidget *widget, gpointer user_data)
 {
     app_data_t *app_data = user_data;
@@ -569,6 +581,9 @@ static void main_screen(GtkApplication *app, gpointer user_data)
 
     button = gtk_builder_get_object(builder, "history");
     g_signal_connect(button, "clicked", G_CALLBACK(maintence_order_history_screen), app_data);
+
+    button = gtk_builder_get_object(builder, "info");
+    g_signal_connect(button, "clicked", G_CALLBACK(info_screen), app_data);
 
     /* Sair */
     button = gtk_builder_get_object(builder, "quit");

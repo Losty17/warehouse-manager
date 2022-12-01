@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <object id="window" class="GtkWindow">
+    <property name="title">Gerenciamento de Almoxarifado</property>
+    <property name="default_width">800</property>
+    <property name="default_height">600</property>
+    <child>    
+      <object id="box" class="GtkBox">
+        <property name="orientation">vertical</property>
+        <property name="halign">center</property>
+        <property name="valign">center</property>
+        <property name="spacing">5</property>
+        <child>
+          <object id="title" class="GtkLabel">
+            <property name="label">Gerenciamento de Almoxarifado</property>
+            <attributes>
+              <attribute name="weight" value="PANGO_WEIGHT_BOLD"/>
+              <attribute name="scale" value="2"/>
+            </attributes>
+          </object>
+        </child>
+        <child>
+          <object id="party" class="GtkLabel">
+            <property name="label">
+                Integrantes:
+                Gabriel Bartholomay,
+                Geovani Henn,
+                Leonardo Mattos,
+                Thifani Spall,
+                Vinícius Kappke
+            </property>
+            <property name="justify">center</property>
+            <attributes>
+              <attribute name="weight" value="PANGO_WEIGHT_BOLD"/>
+              <attribute name="scale" value="1"/>
+            </attributes>
+          </object>
+        </child>
+        <child>
+          <object id="info_title" class="GtkLabel">
+            <property name="label">
+                Informações:
+            </property>
+            <property name="justify">center</property>
+            <property name="margin-bottom">-50</property>
+            <attributes>
+              <attribute name="weight" value="PANGO_WEIGHT_BOLD"/>
+              <attribute name="scale" value="1.5"/>
+            </attributes>
+          </object>
+        </child>
+        <child>
+          <object id="info" class="GtkLabel">
+            <property name="label">
+                A realidade da entrega de matérias em um almoxarifado, quando feita através de uma necessidade de demanda rápida, se faz de forma simples e sem controle, onde o técnico em manutenção solicita o material que é entregue sem nenhum controle.
+
+                Com isso se a atividade de realizar a requisição do material junto ao sistema, não for realizada, o estoque estará com uma inconsistência entre o número presente no sistema, e o número real no físico, gerando inúmeros outros problemas.
+
+                Portanto, nosso problema é alinhar uma entrega de material rápida, mas que de alguma forma esta atividade esteja ligada a uma plataforma digital para que a mesma possa ser monitorada e controlada.
+
+                Desenvolvimento: 17/11/2022 -> 1/12/2022
+            </property>
+            <property name="justify">center</property>
+            <property name="wrap">True</property>
+            <property name="wrap-mode">word</property>
+            <property name="margin-start">80</property>
+            <property name="margin-end">80</property>
+            <attributes>
+              <attribute name="weight" value="PANGO_WEIGHT_BOLD"/>
+              <attribute name="scale" value="1"/>
+            </attributes>
+          </object>
+        </child>
+        <child>
+          <object id="quit" class="GtkButton">
+            <property name="label">Voltar</property>
+            <property name="width-request">100</property>
+            <property name="hexpand">False</property>
+            <property name="halign">center</property>
+          </object>
+        </child>
+      </object>
+    </child>
+  </object>
+</interface>
